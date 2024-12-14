@@ -61,6 +61,9 @@ router.get('/feed', authenticate, async (req, res) => {
 
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
+      limit = limit > 50 ? 50 : limit;
+
+      const skip = (page - 1)* limit;
 
       const connection = await ConnectionRequest.find({
         $or: [{ fromUserId: userId}, {toUserId: userId}]
@@ -72,7 +75,7 @@ router.get('/feed', authenticate, async (req, res) => {
         HideUser.add(user.toUserId.toString());
       });
 
-      const users = await User.find({ $and: [{_id: {$nin: Array.from(HideUser)}}, { _id: {$ne: userId}}]}).select('-password').skip((page-1)*limit).limit(limit); // Exclude password field from results
+      const users = await User.find({ $and: [{_id: {$nin: Array.from(HideUser)}}, { _id: {$ne: userId}}]}).select('-password').skip(skip).limit(limit); // Exclude password field from results
 
       res.send(users); // Send the list of users (excluding the authenticated one)
     } 
